@@ -1,85 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planet AI Technical Documentation: CiucAI</title>
-    <script type="text/javascript" async
-      src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
-    </script>
-    
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Planet AI Technical Documentation: CiucAI</title>
+
     <style>
-         body {
-        font-family: 'Georgia', serif;
-        line-height: 1.6;
-        margin: 0;
-        padding: 0;
-        color: #2c3e50;
+        /* GLOBAL RESET */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-        /* 🔥 BACKGROUND IMAGE ADDED HERE */
-        background-image: url('back.jpg');
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-        background-repeat: no-repeat;
-    }
+        body {
+            font-family: 'Georgia', serif;
+            line-height: 1.6;
+            color: #2c3e50;
 
-    /* container gets translucent background so text stays readable */
-    .container {
-        max-width: 1000px;
-        margin: 40px auto;
-        background: rgba(255, 255, 255, 0.9); /* transparency for readability */
-        padding: 40px;
-        box-shadow: 0 10px 25px rgba(0,0,0,255);
-        border-radius: 12px;
-    }
+            /* Background optimized for mobile */
+            background: 
+                linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.7)),
+                url('back.jpg') center/cover no-repeat fixed;
+        }
+
+        /* MAIN CONTAINER */
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
         h1 {
-            color: #34495e; /* Primary title color */
-            border-bottom: 4px solid #34495e;
-            padding-bottom: 15px;
-            margin-bottom: 30px;
-            font-size: 2.2em;
+            color: #34495e;
+            border-bottom: 3px solid #34495e;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 2em;
         }
+
         h2 {
-            color: #2980b9; /* Section title color */
-            margin-top: 35px;
-            padding-left: 15px;
-            border-left: 5px solid #2980b9;
+            color: #2980b9;
+            margin-top: 30px;
+            padding-left: 12px;
+            border-left: 4px solid #2980b9;
         }
+
         h3 {
             color: #7f8c8d;
-            margin-top: 25px;
-            font-size: 1.2em;
+            margin-top: 20px;
+            font-size: 1.15em;
         }
+
+        /* TABLES */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 25px;
+            margin: 20px 0;
             font-size: 0.95em;
+            overflow-x: auto;
+            display: block; /* mobile scroll */
         }
+
         th, td {
             border: 1px solid #bdc3c7;
             padding: 12px;
             text-align: left;
         }
+
         th {
-            background-color: #eaf2f8; /* Header background */
+            background-color: #eaf2f8;
             color: #34495e;
             font-weight: bold;
         }
+
         .code-block {
-            background-color: #f8f9fa;
-            padding: 20px;
+            background: #f8f9fa;
+            border: 1px solid #e1e4e8;
+            padding: 15px;
+            margin: 15px 0;
             border-radius: 6px;
             overflow-x: auto;
-            margin: 20px 0;
-            border: 1px solid #e1e4e8;
         }
+
         .formula {
+            font-size: 1.25em;
             text-align: center;
-            font-size: 1.3em;
             margin: 20px 0;
         }
+
         .note {
             background-color: #fcf8e3;
             border-left: 5px solid #f39c12;
@@ -87,15 +100,54 @@
             margin: 20px 0;
             border-radius: 4px;
         }
+
         ul {
-            list-style-type: disc;
-            padding-left: 25px;
+            padding-left: 22px;
         }
+
         .comparison-formula {
-            font-size: 1.1em;
+            color: #c0392b;
             font-weight: bold;
-            color: #c0392b; /* Distinct color for formulas in lists */
         }
+
+        @media (max-width: 600px) {
+
+            body {
+                line-height: 1.5;
+            }
+
+            .container {
+                margin: 0px;
+                padding: 18px;
+                border-radius: 0px;
+                background: rgba(255, 255, 255, 0.765);
+            }
+
+            h1 {
+                font-size: 1.6em;
+            }
+
+            h2 {
+                font-size: 1.3em;
+            }
+
+            h3 {
+                font-size: 1.1em;
+            }
+
+            table {
+                font-size: 0.85em;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+
+            .formula {
+                font-size: 1.1em;
+            }
+        }
+
     </style>
 </head>
 <body>
