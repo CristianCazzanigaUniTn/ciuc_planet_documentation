@@ -222,14 +222,7 @@
 
     <h3>Time Estimation (Exponential Moving Average - EMA)</h3>
     <p>The prediction of time intervals between events is managed using EMA with a smoothing factor alpha = 0.3. This technique provides a reactive estimate, giving more weight to recent observations.</p>
-    <div class="code-block formula">
-        $$
-        \text{EMA}_{\text{new}} = \alpha \cdot \text{Sample} + (1 - \alpha) \cdot \text{EMA}_{\text{previous}}
-        $$
-        $$
-        \text{Where } \alpha = 0.3
-        $$
-    </div>
+    <div class="code-block formula"> $$ \text{EMA}_{\text{new}} = \alpha \cdot \text{Sample} + (1 - \alpha) \cdot \text{EMA}_{\text{previous}} $$ $$ \text{Where } \alpha = 0.3 $$ </div>
     
     <h3>Transition Logic (<code>change_state</code>)</h3>
     <p>The state transition is conditioned by data maturity (at least 3 samples) and the risk/opportunity balance:</p>
