@@ -9,11 +9,6 @@
 <title>Planet AI Technical Documentation: CiucAI</title>
 
     <style>
-       {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
 
         body {
             font-family: 'Georgia', serif;
@@ -154,7 +149,6 @@
 
 <div class="container">
 
-    <h1>Planet AI Technical Documentation: CiucAI</h1>
     <p>The <code>CiucAI</code> module is a reactive and predictive artificial intelligence developed for the autonomous management of a planetary entity. Its main function is the controlled generation of resources (Carbon) and the implementation of a dynamic defensive strategy against asteroids. The AI operates on a state model that statistically adapts to external environmental conditions.</p>
     <hr>
 
@@ -187,14 +181,29 @@
                 <td>Estimate of the average time interval between Asteroid events (ms). Indicator of the threat level.</td>
             </tr>
             <tr>
-                <td><strong><code>count_asteroids</code></strong>, <strong><code>count_sunrays</code></strong></td>
+                <td><strong><code>count_asteroids</code></strong></td>
                 <td><code>u32</code></td>
                 <td>Sampling metrics required to enable the transition to the statistical state.</td>
+            </tr>
+            <tr>
+                <td><strong><code>count_sunrays</code></strong></td>
+                <td><code>u32</code></td>
+                <td>Sampling metrics required to enable the transition to the statistical state.</td>
+            </tr>
+            <tr>
+                <td><strong><code>last_time_asteroid</code></strong></td>
+                <td><code>i64</code></td>
+                <td>Timestamp that rapresents the last asteroid event registred.</td>
+            </tr>
+            <tr>
+                <td><strong><code>last_time_sunray</code></strong></td>
+                <td><code>i64</code></td>
+                <td>Timestamp that rapresents the last sunray event registred.</td>
             </tr>
         </tbody>
     </table>
 
-    <h3>Operating Regimes (<code>AIState</code>)</h3>
+    <h3>AI states (<code>AIState</code>)</h3>
     <table>
         <thead>
             <tr>
@@ -207,7 +216,7 @@
             <tr>
                 <td><strong><code>SafeState</code></strong></td>
                 <td>Conservative state (default/fallback). Absolute priority to defense.</td>
-                <td>Strict generation: requires more than 3 charged cells (<code>safe::CELLS</code>) to allow the conversion of a single cell.</td>
+                <td>Strict generation: requires more than <code>safe::CELLS</code> charged cells to allow the conversion of a single cell.</td>
             </tr>
             <tr>
                 <td><strong><code>StatisticState</code></strong></td>
@@ -243,29 +252,95 @@
         <li>
             <strong>Return to <code>SafeState</code>:</strong> 
             Occurs if the risk exceeds the opportunity, indicating a more dangerous environment:
-            <span class="comparison-formula"><code>estimate_asteroid_ms</code> <= <code>estimate_sunray_ms</code></span>.
+            <span class="comparison-formula"><code>estimate_asteroid_ms</code> < <code>estimate_sunray_ms</code></span>.
             (Asteroids are expected more frequently than sunrays).
         </li>
     </ul>
     
 
-    <h3>Generation Strategy in `StatisticState`</h3>
-    <p>The safety threshold for Carbon generation (the number of charged cells to preserve) is modulated in real time:</p>
+    <h3>Generation Strategy in <code>StatisticState</code></h3>
+    <p>
+        In <strong>StatisticState</strong>, Carbon generation is handled by
+        <code>generate_carbon()</code>, which delegates to
+        <code>generate_carbon_statistic_state()</code>.
+        The safety threshold (minimum number of charged cells to preserve) is dynamically
+        modulated in real time based on risk and opportunity indicators.
+    </p>
+    
+    <h4>Risk Modulation (Asteroid)</h4>
+    <p>
+        The reserved energy threshold depends on the predicted arrival time of the next asteroid:
+    </p>
     <ul>
-        <li><strong>Modulation by Risk (Asteroid)</strong>:
+        <li><strong>Asteroid Far</strong> (elapsed time &lt; 50% of the estimate):
             <ul>
-                <li>If the Asteroid is <strong>Far</strong> (Time elapsed < 50% of the estimate): Required reserve: 1 cell.</li>
-                <li>If the Asteroid is <strong>Near</strong> (Time elapsed >= 50% of the estimate): Required reserve: 2 cells.</li>
+                <li>Reserve <strong>1</strong> energy cell.</li>
             </ul>
         </li>
-        <li><strong>Modulation by Opportunity (Sunray)</strong>: If the time elapsed since the last sunray exceeds 75% of the estimate (<code>estimate_sunray_ms</code>), the required cell reserve is reduced by 1 (since imminent resupply is expected). This results in faster resource generation.
+        <li><strong>Asteroid Near</strong> (elapsed time ≥ 50% of the estimate):
             <ul>
-                <li>If the Asteroid is <strong>Far</strong> (Time elapsed < 50% of the estimate): Required reserve: 0 cells.</li>
-                <li>If the Asteroid is <strong>Near</strong> (Time elapsed >= 50% of the estimate): Required reserve: 1 cell.</li>
+                <li>Reserve <strong>2</strong> energy cells.</li>
             </ul>
         </li>
-
     </ul>
+    
+    <h4>Opportunity Modulation (Sunray)</h4>
+    <p>
+        If the time since the last sunray exceeds 75% of the estimated interval
+        (tracked internally via <code>on_sunray()</code> and <code>estimate_sunray_ms</code>),
+        the safety threshold is reduced by <strong>1</strong> because resupply is likely.
+    </p>
+    
+    <ul>
+        <li><strong>Asteroid Far + Opportunity Active</strong>:
+            <ul>
+                <li>Reserve <strong>0</strong> energy cells.</li>
+            </ul>
+        </li>
+        <li><strong>Asteroid Near + Opportunity Active</strong>:
+            <ul>
+                <li>Reserve <strong>1</strong> energy cell.</li>
+            </ul>
+        </li>
+    </ul>
+    
+    <p>
+        This adaptive strategy allows <code>generate_carbon_statistic_state()</code> to balance
+        safety and productivity depending on the predicted environmental conditions.
+    </p>
+    
+    
+    <h3>Carbon Generation in <code>SafeState</code></h3>
+    <p>
+        In <strong>SafeState</strong>, Carbon generation is still triggered via the central
+        <code>generate_carbon()</code> function, but the logic is delegated to the
+        dedicated <code>generate_carbon_safe_state()</code> strategy.
+        The AI follows a conservative rule designed to preserve a stable energy buffer.
+    </p>
+    
+    <h4>Fixed Safety Threshold</h4>
+    <p>
+        Carbon generation is allowed <strong>only if the number of charged energy cells exceeds
+            the fixed threshold <code>safe::CELLS = 3</code></strong>.
+    </p>
+    
+    <ul>
+        <li>The planet must have <strong>at least 4 charged cells</strong> before generating Carbon.</li>
+        <li>Only the excess cell beyond the threshold is consumed for Carbon production.</li>
+        <li>If the threshold is not exceeded, <code>generate_carbon_safe_state()</code>
+            returns an error and no energy is consumed.</li>
+    </ul>
+    
+    <p>
+        This static strategy ensures:
+    </p>
+    
+    <ul>
+        <li>A constant and predictable energy safety margin.</li>
+        <li>Reliable behavior with no dynamic adjustments.</li>
+        <li>Automatic transition to <code>StatisticState</code> once enough environmental data is available.</li>
+    </ul>
+
     <hr>
 
     <h2>3. Event Management and Interactions</h2>
@@ -273,11 +348,16 @@
     <h3>Primary Event Handling</h3>
     <ul>
         <li><strong><code>on_sunray()</code></strong>: Updates estimate, charges the energy cell, attempts immediate rocket construction (<code>build_rocket</code>) and evaluates state transition.</li>
-        <li><strong><code>on_asteroid()</code></strong>: Updates estimate, attempts deviation with a rocket (<code>deflect_asteroid</code>), attempts rocket reconstruction, and evaluates state transition.</li>
+        <li><strong><code>on_asteroid()</code></strong>: Updates estimate, attempts deflection of an asteroid with a rocket (<code>deflect_asteroid</code>), attempts immediate rocket construction (<code>build_rocket</code>), and evaluates state transition.</li>
     </ul>
 
     <h3>Interaction with Protocols</h3>
-    <p>The AI manages communications with the Orchestrator and Explorers in compliance with the game protocols (implementation of the <code>PlanetAI</code> trait).</p>
+    <p>
+        The AI manages communications with the Orchestrator and Explorers in compliance with the game protocols
+        (implementation of the <code>PlanetAI</code> trait). Each received message triggers an internal handler
+        and may result in a response message being sent back.
+    </p>
+    
     <table>
         <thead>
             <tr>
@@ -287,25 +367,149 @@
             </tr>
         </thead>
         <tbody>
+    
+            <!-- ORCHESTRATOR MESSAGES -->
+    
             <tr>
                 <td><code>Sunray</code></td>
                 <td>Orchestrator</td>
-                <td>Execution of <code>on_sunray</code> and sending of <code>SunrayAck</code>.</td>
+                <td>
+                    Execution of <code>on_sunray</code>.<br>
+                    Sends <code>SunrayAck { planet_id }</code>.
+                </td>
             </tr>
+    
             <tr>
-                <td><code>GenerateResourceRequest { Carbon }</code></td>
-                <td>Explorer</td>
-                <td>Execution of <code>generate_carbon</code> based on the current state and sending of <code>GenerateResourceResponse</code>.</td>
+                <td><code>InternalStateRequest</code></td>
+                <td>Orchestrator</td>
+                <td>
+                    Sends <code>InternalStateResponse { planet_id, planet_state }</code>.
+                </td>
             </tr>
+    
+            <tr>
+                <td><code>KillPlanet</code></td>
+                <td>Orchestrator</td>
+                <td>
+                    Logs shutdown event.<br>
+                    Sends <code>KillPlanetResult { planet_id }</code>.
+                </td>
+            </tr>
+    
             <tr>
                 <td><code>handle_asteroid</code></td>
                 <td>Orchestrator</td>
-                <td>Execution of <code>on_asteroid</code>.</td>
+                <td>
+                    Execution of <code>on_asteroid</code>.<br>
+                    Returns an optional <code>Rocket</code>.
+                </td>
             </tr>
+    
+            <!-- EXPLORER MESSAGES -->
+    
+            <tr>
+                <td><code>SupportedResourceRequest { explorer_id }</code></td>
+                <td>Explorer</td>
+                <td>
+                    Sends <code>SupportedResourceResponse { resource_list }</code> using
+                    <code>generator.all_available_recipes()</code>.
+                </td>
+            </tr>
+    
+            <tr>
+                <td><code>SupportedCombinationRequest { explorer_id }</code></td>
+                <td>Explorer</td>
+                <td>
+                    Sends <code>SupportedCombinationResponse { combination_list }</code> using
+                    <code>combinator.all_available_recipes()</code>.
+                </td>
+            </tr>
+    
+            <tr>
+                <td><code>GenerateResourceRequest { Carbon }</code></td>
+                <td>Explorer</td>
+                <td>
+                    Execution of <code>generate_carbon</code>.<br>
+                    If successful: sends <code>GenerateResourceResponse { Carbon }</code>.<br>
+                    If failed: logs an error (no response sent).
+                </td>
+            </tr>
+    
+            <tr>
+                <td><code>GenerateResourceRequest { unsupported type }</code></td>
+                <td>Explorer</td>
+                <td>
+                    Logs that the resource cannot be generated.<br>
+                    No response sent.
+                </td>
+            </tr>
+    
+            <tr>
+                <td><code>CombineResourceRequest</code></td>
+                <td>Explorer</td>
+                <td>
+                    Logs missing combination rules.<br>
+                    No response sent.
+                </td>
+            </tr>
+    
+            <tr>
+                <td><code>AvailableEnergyCellRequest { explorer_id }</code></td>
+                <td>Explorer</td>
+                <td>
+                    Sends <code>AvailableEnergyCellResponse { available_cells }</code>.
+                </td>
+            </tr>
+    
         </tbody>
     </table>
 
-    <h2>4. Tests: Validation of CiucAI Behavior</h2>
+    <hr>
+
+    <h2>4. Logging Policies</h2>
+    <p>
+        The <code>CiucAI</code> module uses a unified logging system to track internal actions,
+        state transitions, and communication with external actors. Logs are produced through
+        the internal <code>log()</code> function and follow consistent rules.
+    </p>
+    
+    <h3>Internal Actions</h3>
+    <ul>
+        <li>Logged with <code>ActorType::User</code> and <code>EventType::InternalPlanetAction</code>.</li>
+        <li>Channel: <code>Debug</code> or <code>Info</code> depending on relevance.</li>
+        <li>Examples: EMA updates, state transitions, resource generation attempts.</li>
+    </ul>
+    
+    <h3>Communication with Orchestrator and Explorers</h3>
+    <ul>
+        <li>Logged with message-related event types:</li>
+        <ul>
+            <li><code>MessageOrchestratorToPlanet</code></li>
+            <li><code>MessagePlanetToExplorer</code></li>
+        </ul>
+        <li>Channels:</li>
+        <ul>
+            <li><code>Info</code> for normal events</li>
+            <li><code>Trace</code> for acknowledgements</li>
+            <li><code>Error</code> for relevant failures</li>
+        </ul>
+    </ul>
+    
+    <h3>Non-Critical Errors</h3>
+    <ul>
+        <li>Handled gracefully without interrupting AI behavior.</li>
+        <li>Logged as <code>InternalPlanetAction</code> with channel <code>Info</code> or <code>Error</code>.</li>
+        <li>Examples: failed carbon generation, inability to build rockets due to insufficient energy.</li>
+    </ul>
+    
+    <p>
+        This logging strategy ensures full traceability of decisions and communication
+        while maintaining uninterrupted AI execution.
+    </p>
+
+    <hr>
+
+    <h2>5. Tests: Validation of CiucAI Behavior</h2>
 
     <p>The following table summarizes the set of unit tests defined inside the <code>tests</code> module.
     Each test validates a critical aspect of the AI’s behavior, such as event handling,
@@ -372,9 +576,9 @@
             </tr>
 
             <tr>
-                <td><code>test_generate_carbon_statical_state</code></td>
+                <td><code>test_generate_carbon_static_state</code></td>
                 <td>Explorer → Planet</td>
-                <td>Carbon generation (StaticalState)</td>
+                <td>Carbon generation (StaticState)</td>
                 <td>Validates the dynamic generation thresholds based on risk/opportunity in StaticalState.</td>
             </tr>
 
