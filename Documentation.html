@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planet AI Technical Documentation: CiucAI</title>
+    <script type="text/javascript" async
+      src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+    </script>
+    
+    <style>
+         body {
+        font-family: 'Georgia', serif;
+        line-height: 1.6;
+        margin: 0;
+        padding: 0;
+        color: #2c3e50;
+
+        /* 🔥 BACKGROUND IMAGE ADDED HERE */
+        background-image: url('back.jpg');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        background-repeat: no-repeat;
+    }
+
+    /* container gets translucent background so text stays readable */
+    .container {
+        max-width: 1000px;
+        margin: 40px auto;
+        background: rgba(255, 255, 255, 0.9); /* transparency for readability */
+        padding: 40px;
+        box-shadow: 0 10px 25px rgba(0,0,0,255);
+        border-radius: 12px;
+    }
+        h1 {
+            color: #34495e; /* Primary title color */
+            border-bottom: 4px solid #34495e;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+        }
+        h2 {
+            color: #2980b9; /* Section title color */
+            margin-top: 35px;
+            padding-left: 15px;
+            border-left: 5px solid #2980b9;
+        }
+        h3 {
+            color: #7f8c8d;
+            margin-top: 25px;
+            font-size: 1.2em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+            font-size: 0.95em;
+        }
+        th, td {
+            border: 1px solid #bdc3c7;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #eaf2f8; /* Header background */
+            color: #34495e;
+            font-weight: bold;
+        }
+        .code-block {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid #e1e4e8;
+        }
+        .formula {
+            text-align: center;
+            font-size: 1.3em;
+            margin: 20px 0;
+        }
+        .note {
+            background-color: #fcf8e3;
+            border-left: 5px solid #f39c12;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        ul {
+            list-style-type: disc;
+            padding-left: 25px;
+        }
+        .comparison-formula {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #c0392b; /* Distinct color for formulas in lists */
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>Planet AI Technical Documentation: CiucAI</h1>
+    <p>The <code>CiucAI</code> module is a reactive and predictive artificial intelligence developed for the autonomous management of a planetary entity. Its main function is the controlled generation of resources (Carbon) and the implementation of a dynamic defensive strategy against asteroids. The AI operates on a state model that statistically adapts to external environmental conditions.</p>
+    <hr>
+
+    <h2>1. Architecture and State Model</h2>
+
+    <h3>Data Structure (<code>CiucAI</code>)</h3>
+    <p>The AI's internal state is maintained via the following key fields:</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Field</th>
+                <th>Type</th>
+                <th>Function</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong><code>state</code></strong></td>
+                <td><code>AIState</code></td>
+                <td>Defines the current operating regime: <strong>SafeState</strong> or <strong>StatisticState</strong>.</td>
+            </tr>
+            <tr>
+                <td><strong><code>estimate_sunray_ms</code></strong></td>
+                <td><code>f64</code></td>
+                <td>Estimate of the average time interval between Sunray events (ms). Crucial for prediction.</td>
+            </tr>
+            <tr>
+                <td><strong><code>estimate_asteroid_ms</code></strong></td>
+                <td><code>f64</code></td>
+                <td>Estimate of the average time interval between Asteroid events (ms). Indicator of the threat level.</td>
+            </tr>
+            <tr>
+                <td><strong><code>count_asteroids</code></strong>, <strong><code>count_sunrays</code></strong></td>
+                <td><code>u32</code></td>
+                <td>Sampling metrics required to enable the transition to the statistical state.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Operating Regimes (<code>AIState</code>)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>State</th>
+                <th>Description</th>
+                <th>Carbon Generation Strategy</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong><code>SafeState</code></strong></td>
+                <td>Conservative state (default/fallback). Absolute priority to defense.</td>
+                <td>Strict generation: requires more than 3 charged cells (<code>safe::CELLS</code>) to allow the conversion of a single cell.</td>
+            </tr>
+            <tr>
+                <td><strong><code>StatisticState</code></strong></td>
+                <td>High-efficiency predictive state. Priority to efficiency based on calculated risk.</td>
+                <td>Dynamic generation: variable safety threshold 1 or 2 cells based on EMA estimates.</td>
+            </tr>
+        </tbody>
+    </table>
+    <hr>
+
+    <h2>2. Prediction and Transition Mechanisms</h2>
+
+    <h3>Time Estimation (Exponential Moving Average - EMA)</h3>
+    <p>The prediction of time intervals between events is managed using EMA with a smoothing factor alpha = 0.3. This technique provides a reactive estimate, giving more weight to recent observations.</p>
+    <div class="code-block formula">
+        $$
+        \text{EMA}_{\text{new}} = \alpha \cdot \text{Sample} + (1 - \alpha) \cdot \text{EMA}_{\text{previous}}
+        $$
+        $$
+        \text{Where } \alpha = 0.3
+        $$
+    </div>
+    
+    <h3>Transition Logic (<code>change_state</code>)</h3>
+    <p>The state transition is conditioned by data maturity (at least 3 samples) and the risk/opportunity balance:</p>
+    <ul>
+        <li>
+            <strong>Transition to <code>StatisticState</code>:</strong> 
+            Requires Samples >= 3 and that the risk does not exceed the opportunity:
+            <span class="comparison-formula"><code>estimate_asteroid_ms</code> >= <code>estimate_sunray_ms</code></span>.
+            (Threat is less frequent than or equal to opportunity).
+        </li>
+        <li>
+            <strong>Return to <code>SafeState</code>:</strong> 
+            Occurs if the risk exceeds the opportunity, indicating a more dangerous environment:
+            <span class="comparison-formula"><code>estimate_asteroid_ms</code> <= <code>estimate_sunray_ms</code></span>.
+            (Asteroids are expected more frequently than sunrays).
+        </li>
+    </ul>
+    
+
+    <h3>Generation Strategy in `StatisticState`</h3>
+    <p>The safety threshold for Carbon generation (the number of charged cells to preserve) is modulated in real time:</p>
+    <ul>
+        <li><strong>Modulation by Risk (Asteroid)</strong>:
+            <ul>
+                <li>If the Asteroid is <strong>Far</strong> (Time elapsed < 50% of the estimate): Required reserve: 1 cell.</li>
+                <li>If the Asteroid is <strong>Near</strong> (Time elapsed >= 50% of the estimate): Required reserve: 2 cells.</li>
+            </ul>
+        </li>
+        <li><strong>Modulation by Opportunity (Sunray)</strong>: If the time elapsed since the last sunray exceeds 75% of the estimate (<code>estimate_sunray_ms</code>), the required cell reserve is reduced by 1 (since imminent resupply is expected). This results in faster resource generation.
+            <ul>
+                <li>If the Asteroid is <strong>Far</strong> (Time elapsed < 50% of the estimate): Required reserve: 0 cells.</li>
+                <li>If the Asteroid is <strong>Near</strong> (Time elapsed >= 50% of the estimate): Required reserve: 1 cell.</li>
+            </ul>
+        </li>
+
+    </ul>
+    <hr>
+
+    <h2>3. Event Management and Interactions</h2>
+
+    <h3>Primary Event Handling</h3>
+    <ul>
+        <li><strong><code>on_sunray()</code></strong>: Updates estimate, charges the energy cell, attempts immediate rocket construction (<code>build_rocket</code>) and evaluates state transition.</li>
+        <li><strong><code>on_asteroid()</code></strong>: Updates estimate, attempts deviation with a rocket (<code>deflect_asteroid</code>), attempts rocket reconstruction, and evaluates state transition.</li>
+    </ul>
+
+    <h3>Interaction with Protocols</h3>
+    <p>The AI manages communications with the Orchestrator and Explorers in compliance with the game protocols (implementation of the <code>PlanetAI</code> trait).</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Message (Protocol)</th>
+                <th>Source</th>
+                <th>Response / Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>Sunray</code></td>
+                <td>Orchestrator</td>
+                <td>Execution of <code>on_sunray</code> and sending of <code>SunrayAck</code>.</td>
+            </tr>
+            <tr>
+                <td><code>GenerateResourceRequest { Carbon }</code></td>
+                <td>Explorer</td>
+                <td>Execution of <code>generate_carbon</code> based on the current state and sending of <code>GenerateResourceResponse</code>.</td>
+            </tr>
+            <tr>
+                <td><code>handle_asteroid</code></td>
+                <td>Orchestrator</td>
+                <td>Execution of <code>on_asteroid</code>.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>4. Tests: Validation of CiucAI Behavior</h2>
+
+    <p>The following table summarizes the set of unit tests defined inside the <code>tests</code> module.
+    Each test validates a critical aspect of the AI’s behavior, such as event handling,
+    resource generation, and the correct communication with Orchestrator and Explorer.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Test Name</th>
+                <th>Category</th>
+                <th>Verified Function</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+
+            <tr>
+                <td><code>test_asteroid_with_no_rocket</code></td>
+                <td>Orchestrator → Planet</td>
+                <td>Asteroid handling</td>
+                <td>Ensures the AI has no rockets initially and correctly answers with <em>rocket = None</em>.</td>
+            </tr>
+
+            <tr>
+                <td><code>test_asteroid_with_rocket</code></td>
+                <td>Orchestrator → Planet</td>
+                <td>Planetary defense</td>
+                <td>After receiving at least one sunray, the AI must build a rocket and use it properly.</td>
+            </tr>
+
+            <tr>
+                <td><code>test_asteroid_is_the_rocket_rebuild</code></td>
+                <td>Orchestrator → Planet</td>
+                <td>Rocket reconstruction</td>
+                <td>Validates that after every asteroid impact the rocket is automatically rebuilt.</td>
+            </tr>
+
+            <tr>
+                <td><code>test_available_energy_cell_request</code></td>
+                <td>Explorer → Planet</td>
+                <td>Energy availability</td>
+                <td>Checks that the AI correctly reports the number of charged energy cells.</td>
+            </tr>
+
+            <tr>
+                <td><code>test_supported_resource_request</code></td>
+                <td>Explorer → Planet</td>
+                <td>Supported resources</td>
+                <td>The AI must report that the only supported resource is <strong>Carbon</strong>.</td>
+            </tr>
+
+            <tr>
+                <td><code>test_supported_combination_request</code></td>
+                <td>Explorer → Planet</td>
+                <td>Supported combinations</td>
+                <td>Verifies that no resource combinations are supported (empty list).</td>
+            </tr>
+
+            <tr>
+                <td><code>test_generate_carbon_safe_state</code></td>
+                <td>Explorer → Planet</td>
+                <td>Carbon generation (SafeState)</td>
+                <td>In SafeState, generation only occurs with ≥ 4 charged cells. The test validates allowed and forbidden cases.</td>
+            </tr>
+
+            <tr>
+                <td><code>test_generate_carbon_statical_state</code></td>
+                <td>Explorer → Planet</td>
+                <td>Carbon generation (StaticalState)</td>
+                <td>Validates the dynamic generation thresholds based on risk/opportunity in StaticalState.</td>
+            </tr>
+
+        </tbody>
+    </table>
+
+
+</div>
+
+</body>
+</html>
