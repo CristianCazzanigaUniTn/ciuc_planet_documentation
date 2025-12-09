@@ -148,8 +148,11 @@
 <body>
 
 <div class="container">
-
-    <p>The <code>CiucAI</code> module is a reactive and predictive artificial intelligence developed for the autonomous management of a planetary entity. Its main function is the controlled generation of resources (Carbon) and the implementation of a dynamic defensive strategy against asteroids. The AI operates on a state model that statistically adapts to external environmental conditions.</p>
+    <h1>Planet AI Technical Documentation: CiucAI</h1>
+    
+    <p>The <code>CiucAI</code> module is a reactive and predictive artificial intelligence developed for the autonomous management of a planetary entity. 
+        It's designed for type A planets, that can only generate Carbon resources, has five energy cells and can build a rocket.
+        Its main function is the controlled generation of resources and the implementation of a dynamic defensive strategy against asteroids. The AI operates on a state model that statistically adapts to external environmental conditions.</p>
     <hr>
 
     <h2>1. Architecture and State Model</h2>
@@ -200,6 +203,59 @@
                 <td><code>i64</code></td>
                 <td>Timestamp that rapresents the last sunray event registred.</td>
             </tr>
+        </tbody>
+    </table>
+
+    <h3>Core Constants</h3>
+    <p>
+        The AI relies on a small set of predefined constants that regulate safety behavior,
+        thresholds, and adaptation logic across <code>SafeState</code> and <code>StatisticState</code>.
+        These constants influence the strategies implemented in
+        <code>generate_carbon_safe_state()</code>,
+        <code>generate_carbon_statistic_state()</code>,
+        <code>on_sunray()</code>, and <code>on_asteroid()</code>.
+    </p>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Constant</th>
+                <th>Usage</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+    
+            <tr>
+                <td><code>safe::CELLS</code></td>
+                <td>
+                    Minimum number of charged energy cells that must always be preserved in
+                    <code>SafeState</code>.<br>
+                    Used by <code>generate_carbon_safe_state()</code>.
+                </td>
+                <td><strong>3</strong></td>
+            </tr>
+    
+            <tr>
+                <td><code>statistic::SECOND</code></td>
+                <td>
+                    Minimum number of charged energy cells that must be preserved in
+                    <code>StatisticState</code> when an asteroid is considered near.<br>
+                    Used by <code>generate_carbon_statistic_state()</code>.
+                </td>
+                <td><em>2</em></td>
+            </tr>
+    
+            <tr>
+                <td><code>statistic::FIRST</code></td>
+                <td>
+                    Minimum number of charged energy cells that must be preserved in
+                    <code>StatisticState</code> when an asteroid is considered far.<br>
+                    Used by <code>generate_carbon_statistic_state()</code>.
+                </td>
+                <td><em>1</em></td>
+            </tr>
+    
         </tbody>
     </table>
 
@@ -256,6 +312,37 @@
             (Asteroids are expected more frequently than sunrays).
         </li>
     </ul>
+
+    <h3>Carbon Generation in <code>SafeState</code></h3>
+    <p>
+        In <strong>SafeState</strong>, Carbon generation is still triggered via the central
+        <code>generate_carbon()</code> function, but the logic is delegated to the
+        dedicated <code>generate_carbon_safe_state()</code> strategy.
+        The AI follows a conservative rule designed to preserve a stable energy buffer.
+    </p>
+    
+    <h4>Fixed Safety Threshold</h4>
+    <p>
+        Carbon generation is allowed <strong>only if the number of charged energy cells exceeds
+            the fixed threshold <code>safe::CELLS = 3</code></strong>.
+    </p>
+    
+    <ul>
+        <li>The planet must have <strong>at least 4 charged cells</strong> before generating Carbon.</li>
+        <li>Only the excess cell beyond the threshold is consumed for Carbon production.</li>
+        <li>If the threshold is not exceeded, <code>generate_carbon_safe_state()</code>
+            returns an error and no energy is consumed.</li>
+    </ul>
+    
+    <p>
+        This static strategy ensures:
+    </p>
+    
+    <ul>
+        <li>A constant and predictable energy safety margin.</li>
+        <li>Reliable behavior with no dynamic adjustments.</li>
+        <li>Automatic transition to <code>StatisticState</code> once enough environmental data is available.</li>
+    </ul>
     
 
     <h3>Generation Strategy in <code>StatisticState</code></h3>
@@ -308,38 +395,6 @@
         This adaptive strategy allows <code>generate_carbon_statistic_state()</code> to balance
         safety and productivity depending on the predicted environmental conditions.
     </p>
-    
-    
-    <h3>Carbon Generation in <code>SafeState</code></h3>
-    <p>
-        In <strong>SafeState</strong>, Carbon generation is still triggered via the central
-        <code>generate_carbon()</code> function, but the logic is delegated to the
-        dedicated <code>generate_carbon_safe_state()</code> strategy.
-        The AI follows a conservative rule designed to preserve a stable energy buffer.
-    </p>
-    
-    <h4>Fixed Safety Threshold</h4>
-    <p>
-        Carbon generation is allowed <strong>only if the number of charged energy cells exceeds
-            the fixed threshold <code>safe::CELLS = 3</code></strong>.
-    </p>
-    
-    <ul>
-        <li>The planet must have <strong>at least 4 charged cells</strong> before generating Carbon.</li>
-        <li>Only the excess cell beyond the threshold is consumed for Carbon production.</li>
-        <li>If the threshold is not exceeded, <code>generate_carbon_safe_state()</code>
-            returns an error and no energy is consumed.</li>
-    </ul>
-    
-    <p>
-        This static strategy ensures:
-    </p>
-    
-    <ul>
-        <li>A constant and predictable energy safety margin.</li>
-        <li>Reliable behavior with no dynamic adjustments.</li>
-        <li>Automatic transition to <code>StatisticState</code> once enough environmental data is available.</li>
-    </ul>
 
     <hr>
 
