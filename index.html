@@ -155,6 +155,40 @@
         Its main function is the controlled generation of resources and the implementation of a dynamic defensive strategy against asteroids. The AI operates on a state model that statistically adapts to external environmental conditions.</p>
     <hr>
 
+    <h2>0. File Structure</h2>
+    <p>The project is organized into modules to separate functionality and provide a clear interface for external users:</p>
+    
+    <ul>
+        <li><strong>lib.rs</strong>: Entry point of the crate; declares and exposes the <code>ciuc</code> module for
+            external use.</li>
+    
+        <li><strong>ciuc/</strong>: Main AI folder
+            <ul>
+                <li><strong>mod.rs</strong>: Aggregates internal modules of the AI.</li>
+                <li><strong>ciuc_ai.rs</strong>: Defines the <code>CiucAI</code> struct and implements the core AI logic.
+                </li>
+                <li><strong>create_planet.rs</strong>: Contains the <code>create_planet</code> function, exposed for
+                    external usage.</li>
+                <li><strong>handlers.rs</strong>: Implements the <code>PlanetAI</code> trait and defines event handlers
+                    (<code>on_sunray</code>, <code>on_asteroid</code>).</li>
+                <li><strong>actions.rs</strong>: Functions that modify planet state, such as <code>build_rocket</code>,
+                    <code>deflect_asteroid</code>, <code>charge_cell_with_sunray</code>, and <code>generate_carbon</code>.
+                </li>
+                <li><strong>carbon.rs</strong>: Helper functions for <code>generate_carbon</code>, with separate logic for
+                    <code>SafeState</code> and <code>StatisticState</code>, and calculation constants.</li>
+                <li><strong>esteem.rs</strong>: Functions to compute estimations used in <code>StatisticState</code>
+                    decision-making.</li>
+                <li><strong>logging.rs</strong>: Implements <code>log</code> using the common logging interface.</li>
+            </ul>
+        </li>
+    
+        <li><strong>tests/</strong>: Integration and unit tests validating AI behavior and event handling.</li>
+    </ul>
+    
+    <p>This modular structure allows external users to interact with the AI by importing the main crate and calling only the
+        exposed functions, keeping internal details encapsulated.</p>
+
+
     <h2>1. Architecture and State Model</h2>
 
     <h3>Data Structure (<code>CiucAI</code>)</h3>
