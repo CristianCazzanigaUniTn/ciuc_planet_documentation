@@ -227,7 +227,7 @@
         <tbody>
     
             <tr>
-                <td><code>safe::CELLS</code></td>
+                <td><code>safe::SAFE_CELLS</code></td>
                 <td>
                     Minimum number of charged energy cells that must always be preserved in
                     <code>SafeState</code>.<br>
@@ -237,7 +237,7 @@
             </tr>
     
             <tr>
-                <td><code>statistic::SECOND</code></td>
+                <td><code>statistic::SAFE_CELLS_NEAR_ASTEROID</code></td>
                 <td>
                     Minimum number of charged energy cells that must be preserved in
                     <code>StatisticState</code> when an asteroid is considered near.<br>
@@ -247,13 +247,33 @@
             </tr>
     
             <tr>
-                <td><code>statistic::FIRST</code></td>
+                <td><code>statistic::SAFE_CELLS_FAR_ASTEROID</code></td>
                 <td>
                     Minimum number of charged energy cells that must be preserved in
                     <code>StatisticState</code> when an asteroid is considered far.<br>
                     Used by <code>generate_carbon_statistic_state()</code>.
                 </td>
                 <td><em>1</em></td>
+            </tr>
+
+            <tr>
+                <td><code>statistic::SUNRAY_IMMINENT_THRESHOLD</code></td>
+                <td>
+                Fraction of the estimated sunray interval after which a sunray is considered imminent in
+                    <code>StatisticState</code>.<br>
+                    Used by <code>generate_carbon_statistic_state()</code>.
+                </td>
+                <td><em>0.75</em></td>
+            </tr>
+
+            <tr>
+                <td><code>statistic::ASTEROID_FAR_THRESHOLD</code></td>
+                <td>
+                    Fraction of the estimated asteroid interval under which the asteroid is considered far in
+                    <code>StatisticState</code>.<br>
+                    Used by <code>generate_carbon_statistic_state()</code>.
+                </td>
+                <td><em>0.5</em></td>
             </tr>
     
         </tbody>
